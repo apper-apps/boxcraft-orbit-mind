@@ -1,8 +1,8 @@
-import React, { useRef, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import Card from '@/components/atoms/Card'
-import Button from '@/components/atoms/Button'
-import ApperIcon from '@/components/ApperIcon'
+import React, { useEffect, useRef } from "react";
+import { motion } from "framer-motion";
+import ApperIcon from "@/components/ApperIcon";
+import Card from "@/components/atoms/Card";
+import Button from "@/components/atoms/Button";
 
 const Box3DPreview = ({ 
   design = { 
@@ -17,37 +17,49 @@ const Box3DPreview = ({
 
   useEffect(() => {
     if (!canvasRef.current) return
-
+const drawBox = () => {
     const canvas = canvasRef.current
-    const ctx = canvas.getContext('2d')
+    if (!canvas) return
     
-    // Set canvas size
-    const rect = canvas.getBoundingClientRect()
-    canvas.width = rect.width * window.devicePixelRatio
-    canvas.height = rect.height * window.devicePixelRatio
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
-
-    const drawBox = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
+    try {
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
       
-      const centerX = rect.width / 2
-      const centerY = rect.height / 2
+      const rect = canvas.getBoundingClientRect()
       
-      // Scale dimensions for display
-      const scale = Math.min(rect.width, rect.height) / 300
-      const length = (design.dimensions?.length || 12) * scale * 8
-      const width = (design.dimensions?.width || 8) * scale * 8
-      const height = (design.dimensions?.height || 6) * scale * 8
+      // Validate canvas dimensions to prevent zero-width/height error
+      const minWidth = 100
+      const minHeight = 100
+      const canvasWidth = Math.max(rect.width || minWidth, minWidth)
+      const canvasHeight = Math.max(rect.height || minHeight, minHeight)
+      
+      // Only set dimensions if they're valid and different
+      if (canvas.width !== canvasWidth * window.devicePixelRatio || 
+          canvas.height !== canvasHeight * window.devicePixelRatio) {
+        canvas.width = canvasWidth * window.devicePixelRatio
+        canvas.height = canvasHeight * window.devicePixelRatio
+        ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
+      }
+      
+      // Clear canvas with validated dimensions
+      ctx.clearRect(0, 0, canvasWidth, canvasHeight)
+      
+      if (design && canvasWidth > 0 && canvasHeight > 0) {
+        const centerX = canvasWidth / 2
+        const centerY = canvasHeight / 2
+// Scale dimensions for display with safety checks
+        const scale = Math.min(canvasWidth, canvasHeight) / 300
+        const length = Math.max((design.dimensions?.length || 12) * scale * 8, 10)
+        const width = Math.max((design.dimensions?.width || 8) * scale * 8, 10)
+        const height = Math.max((design.dimensions?.height || 6) * scale * 8, 10)
 
-      // Apply rotation
-      const rotX = rotationRef.current.x
-      const rotY = rotationRef.current.y
+        // Apply rotation with validation
+        const rotX = rotationRef.current?.x || 0
+        const rotY = rotationRef.current?.y || 0
 
-      // Calculate 3D perspective points
-      const cos = Math.cos
-      const sin = Math.sin
-
-      // Define box vertices
+        // Calculate 3D perspective points
+        const cos = Math.cos
+        const sin = Math.sin
       const vertices = [
         [-length/2, -width/2, -height/2],
         [length/2, -width/2, -height/2],
@@ -114,80 +126,101 @@ const Box3DPreview = ({
         ctx.stroke()
       })
 
-      // Draw logo placeholder on front face
+// Draw logo placeholder on front face
       const frontCenter = [
         (projected[0][0] + projected[1][0] + projected[2][0] + projected[3][0]) / 4,
         (projected[0][1] + projected[1][1] + projected[2][1] + projected[3][1]) / 4
       ]
-
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'
-      ctx.fillRect(frontCenter[0] - 20, frontCenter[1] - 10, 40, 20)
-      ctx.strokeStyle = 'rgba(44, 62, 80, 0.5)'
-      ctx.lineWidth = 1
-      ctx.strokeRect(frontCenter[0] - 20, frontCenter[1] - 10, 40, 20)
       
-      ctx.fillStyle = 'rgba(44, 62, 80, 0.7)'
-      ctx.font = '12px Inter'
-      ctx.textAlign = 'center'
-      ctx.fillText('LOGO', frontCenter[0], frontCenter[1] + 4)
+      // Draw simple logo placeholder
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
+      ctx.beginPath()
+      ctx.arc(frontCenter[0], frontCenter[1], 20, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.strokeStyle = 'rgba(44, 62, 80, 0.5)'
+      ctx.lineWidth = 2
+      ctx.stroke()
+      }
+    } catch (error) {
+      console.warn('Canvas drawing error:', error)
+      // Fallback: draw a simple error indicator
+      if (ctx && canvasWidth > 0 && canvasHeight > 0) {
+        ctx.fillStyle = '#f3f4f6'
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight)
+        ctx.fillStyle = '#6b7280'
+        ctx.font = '14px Arial'
+        ctx.textAlign = 'center'
+        ctx.fillText('Preview unavailable', canvasWidth / 2, canvasHeight / 2)
+      }
     }
+  }
 
-    const animate = () => {
+  const animate = () => {
+    try {
       rotationRef.current.y += 0.01
       drawBox()
       animationRef.current = requestAnimationFrame(animate)
+    } catch (error) {
+      console.error('Animation error:', error)
     }
+  }
 
-    animate()
-
+  // Start animation
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      animate()
+    }, 100)
+    
     return () => {
+      clearTimeout(timer)
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current)
       }
     }
-  }, [design])
-
-  const handleMouseMove = (e) => {
-    if (e.buttons === 1) { // Left mouse button pressed
-      const rect = canvasRef.current.getBoundingClientRect()
-      const deltaX = (e.clientX - rect.left - rect.width / 2) / rect.width
-      const deltaY = (e.clientY - rect.top - rect.height / 2) / rect.height
+  }, [])
+const handleMouseMove = (e) => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    
+    try {
+      const rect = canvas.getBoundingClientRect()
+      if (rect.width === 0 || rect.height === 0) return
       
-      rotationRef.current.x = deltaY * Math.PI
-      rotationRef.current.y = deltaX * Math.PI
+      const deltaX = (e.clientX - rect.left - rect.width / 2) / 100
+      const deltaY = (e.clientY - rect.top - rect.height / 2) / 100
+      
+      rotationRef.current = {
+        x: Math.max(-0.5, Math.min(0.5, deltaY)),
+        y: Math.max(-0.5, Math.min(0.5, deltaX))
+      }
+    } catch (error) {
+      console.warn('Mouse move handler error:', error)
     }
   }
 
   return (
-    <Card className="p-6 h-full">
-      <div className="space-y-4 h-full flex flex-col">
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-secondary-700">3D Preview</h3>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" icon="RotateCcw">
-              Reset
-            </Button>
-            <Button variant="ghost" size="sm" icon="Download">
-              Export
-            </Button>
-          </div>
+    <Card className="h-full bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <ApperIcon className="w-6 h-6 text-amber-600" />
+          <h3 className="text-lg font-semibold text-gray-900">3D Preview</h3>
         </div>
-
-        <div className="flex-1 relative bg-gradient-to-br from-gray-50 to-primary-50 rounded-lg overflow-hidden">
+        
+        <motion.div
+          className="relative"
+          whileHover={{ scale: 1.02 }}
+          transition={{ type: "spring", stiffness: 300 }}
+        >
           <canvas
             ref={canvasRef}
-            className="w-full h-full cursor-grab active:cursor-grabbing"
+            className="w-full h-64 rounded-lg border border-gray-200 cursor-move"
             onMouseMove={handleMouseMove}
-            style={{ minHeight: '400px' }}
+            style={{ minWidth: '100px', minHeight: '100px' }}
           />
-          
-          <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg text-sm text-secondary-600">
-            <div className="flex items-center gap-2">
-              <ApperIcon name="MousePointer2" size={14} />
-              Drag to rotate
-            </div>
+          <div className="absolute bottom-2 right-2 text-xs text-gray-500 bg-white px-2 py-1 rounded">
+            Drag to rotate
           </div>
-        </div>
+        </motion.div>
 
         <div className="grid grid-cols-3 gap-4 text-center">
           <div className="bg-surface p-3 rounded-lg">
