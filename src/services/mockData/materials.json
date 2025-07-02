@@ -1,0 +1,62 @@
+[
+  {
+    "Id": 1,
+    "name": "Corrugated Cardboard",
+    "thickness": "Single Wall (3-4mm)",
+    "pricePerSqFt": 0.45,
+    "eco": true,
+    "description": "Standard corrugated cardboard, perfect for shipping and storage boxes",
+    "durability": "Medium",
+    "printQuality": "Good"
+  },
+  {
+    "Id": 2,
+    "name": "Double Wall Corrugated",
+    "thickness": "Double Wall (6-7mm)",
+    "pricePerSqFt": 0.72,
+    "eco": true,
+    "description": "Heavy-duty corrugated for maximum protection and strength",
+    "durability": "High",
+    "printQuality": "Good"
+  },
+  {
+    "Id": 3,
+    "name": "Kraft Paperboard",
+    "thickness": "18pt (0.45mm)",
+    "pricePerSqFt": 0.38,
+    "eco": true,
+    "description": "Natural kraft paper with rustic appeal, great for eco-friendly branding",
+    "durability": "Medium",
+    "printQuality": "Excellent"
+  },
+  {
+    "Id": 4,
+    "name": "White Paperboard",
+    "thickness": "18pt (0.45mm)",
+    "pricePerSqFt": 0.42,
+    "eco": false,
+    "description": "Bright white paperboard with smooth finish, ideal for vibrant printing",
+    "durability": "Medium",
+    "printQuality": "Excellent"
+  },
+  {
+    "Id": 5,
+    "name": "Rigid Paperboard",
+    "thickness": "32pt (0.8mm)",
+    "pricePerSqFt": 0.89,
+    "eco": false,
+    "description": "Premium rigid paperboard for luxury packaging and display boxes",
+    "durability": "High",
+    "printQuality": "Premium"
+  },
+  {
+    "Id": 6,
+    "name": "Recycled Cardboard",
+    "thickness": "Single Wall (3-4mm)",
+    "pricePerSqFt": 0.38,
+    "eco": true,
+    "description": "100% recycled cardboard with natural brown color and texture",
+    "durability": "Medium",
+    "printQuality": "Fair"
+  }
+]
